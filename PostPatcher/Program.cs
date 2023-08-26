@@ -7,7 +7,7 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using MethodAttributes = Mono.Cecil.MethodAttributes;
 
-namespace Prepatcher
+namespace Postpatcher
 {
     // ReSharper disable once ClassNeverInstantiated.Global
     internal class Program
@@ -23,7 +23,7 @@ namespace Prepatcher
             int changes = 0;
 
             using ModuleDefinition module = ModuleDefinition.ReadModule(args[0]);
-            
+
             TypeDefinition pd = module.GetType("", "PlayerData");
 
             MethodDefinition pdGetBool = pd.Methods.First(method => method.Name == "GetBool");
@@ -64,7 +64,7 @@ namespace Prepatcher
                         continue;
 
                     ILProcessor il = method.Body.GetILProcessor();
-                    
+
                     // Replace short branches with normal branches, etc.
                     // This ensures that inserting instructions won't cause
                     // short branch offsets to overflow and become null
@@ -127,7 +127,7 @@ namespace Prepatcher
                             }
                         }
                     }
-                    
+
                     // After inserting instructions, replace branches
                     // with short branches where possible for optimization
                     method.Body.OptimizeMacros();
@@ -208,7 +208,7 @@ namespace Prepatcher
                 generic.GenericArguments.Add(field.FieldType);
                 callSet = Instruction.Create(OpCodes.Callvirt, generic);
             }
-            
+
             il.InsertAfter(instr, callSet);
 
             instr.OpCode = ldstr.OpCode;
@@ -259,7 +259,7 @@ namespace Prepatcher
                 generic.GenericArguments.Add(field.FieldType);
                 callGet = Instruction.Create(OpCodes.Callvirt, generic);
             }
-            
+
             il.InsertAfter(instr, callGet);
 
             instr.OpCode = ldstr.OpCode;

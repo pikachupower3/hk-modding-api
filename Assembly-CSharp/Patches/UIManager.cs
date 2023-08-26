@@ -84,10 +84,10 @@ namespace Modding.Patches
 
             var pos = clone.transform.position;
             
-            clone.transform.position = pos - new Vector3(0.4f, 0.1f, 0);
-            dlc.transform.position = pos + new Vector3(0.6f, 0f, 0);
+            clone.transform.position = pos - new Vector3(1.05f, 0.1f, 0);
+            dlc.transform.position = pos + new Vector3(0.4f, 0f, 0);
             clone.transform.localScale *= 0.1f;
-            
+
             var sr = clone.GetComponent<SpriteRenderer>();
             sr.sprite = LoadImage();
         }
