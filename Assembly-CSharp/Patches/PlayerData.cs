@@ -173,13 +173,11 @@ namespace Modding.Patches
             ModHooks.SetPlayerVector3(vector3Name, value, this);
         }
 
-        [MonoModReplace]
         public T GetVariable<T>(string varName)
         {
             return ModHooks.GetPlayerVariable<T>(varName, this);
         }
 
-        [MonoModReplace]
         public void SetVariable<T>(string varName, T value)
         {
             ModHooks.SetPlayerVariable<T>(varName, value, this);
@@ -187,9 +185,9 @@ namespace Modding.Patches
 
         private void TakeHealthInternal(int amount)
         {
-            if (amount > 0 && GetInt(nameof(health)) == GetInt(nameof(maxHealth)) && GetInt(nameof(health)) != CurrentMaxHealth)
+            if (amount > 0 && GetInt(nameof(health)) == GetInt(nameof(maxHealth)) && GetInt(nameof(health)) != GetInt(nameof(maxHealth)))
             {
-                SetInt(nameof(health), CurrentMaxHealth);
+                SetInt(nameof(health), GetInt(nameof(maxHealth)));
             }
 
             if (GetInt(nameof(healthBlue)) > 0)

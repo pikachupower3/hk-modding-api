@@ -266,13 +266,20 @@ internal class Preloader : MonoBehaviour
 
         void CleanupPreloadOperation(string sceneName)
         {
+            IEnumerator DoUnload(AsyncOperation unload)
+            {
+                yield return unload;
+
+                preloadOperationQueue.Remove(unload);
+            }
+
             Logger.APILogger.LogFine($"Unloading scene \"{sceneName}\"");
             
             AsyncOperation unloadOp = USceneManager.UnloadSceneAsync(sceneName);
             
             sceneAsyncOperationHolder[sceneName] = (sceneAsyncOperationHolder[sceneName].load, unloadOp);
             
-            unloadOp.completed += _ => preloadOperationQueue.Remove(unloadOp);
+            StartCoroutine(DoUnload(unloadOp));
             
             preloadOperationQueue.Add(unloadOp);
         }

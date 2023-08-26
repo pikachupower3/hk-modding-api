@@ -558,9 +558,6 @@ namespace Modding.Patches
         [MonoModIgnore]
         private extern IEnumerator StartRecoil(CollisionSide impactSide, bool spawnDamageEffect, int damageAmount);
 
-        [MonoModIgnore]
-        public event HeroController.TakeDamageEvent OnTakenDamage;
-
         [MonoModReplace]
         public void TakeDamage(GameObject go, CollisionSide damageSide, int damageAmount, int hazardType)
         {
@@ -568,22 +565,6 @@ namespace Modding.Patches
             bool spawnDamageEffect = true;
             if (damageAmount > 0)
             {
-                if (BossSceneController.IsBossScene)
-                {
-                    int bossLevel = BossSceneController.Instance.BossLevel;
-                    if (bossLevel != 1)
-                    {
-                        if (bossLevel == 2)
-                        {
-                            damageAmount = 9999;
-                        }
-                    }
-                    else
-                    {
-                        damageAmount *= 2;
-                    }
-                }
-
                 if (this.CanTakeDamage())
                 {
                     if (this.damageMode == DamageMode.HAZARD_ONLY && hazardType == 1)
@@ -764,11 +745,6 @@ namespace Modding.Patches
                     {
                         this.cState.nailCharging = false;
                         this.nailChargeTimer = 0f;
-                    }
-
-                    if (damageAmount > 0 && this.OnTakenDamage != null)
-                    {
-                        this.OnTakenDamage();
                     }
 
                     if (this.playerData.GetInt("health") == 0)
