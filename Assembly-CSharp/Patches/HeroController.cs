@@ -944,5 +944,17 @@ namespace Modding.Patches
             ModHooks.OnDoAttack();
             orig_DoAttack();
         }
+
+        public void TakeMPQuick(int amount)
+        {
+            if (this.playerData.GetInt("MPCharge") > 0)
+            {
+                this.playerData.TakeMP(amount);
+                if (amount > 1)
+                {
+                    GameCameras.instance.soulOrbFSM.SendEvent("MP DRAIN");
+                }
+            }
+        }
     }
 }

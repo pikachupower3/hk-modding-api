@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using GlobalEnums;
 using MonoMod;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -572,6 +573,188 @@ namespace Modding.Patches
                     this.inputHandler.AllowPause();
                 }
             }
+            yield break;
+        }
+        #endregion
+
+        #region BeginSceneTransitionRoutine
+
+        [MonoModIgnore]
+        private bool isLoading;
+
+        [MonoModIgnore]
+        private GameManager.SceneLoadVisualizations loadVisualization;
+
+        [MonoModIgnore]
+        private string targetScene;
+
+        [MonoModIgnore]
+        private float entryDelay;
+
+        [MonoModIgnore]
+        private int sceneLoadsWithoutGarbageCollect;
+
+        [MonoModIgnore]
+        public static event GameManager.SceneTransitionBeganDelegate SceneTransitionBegan;
+        public bool IsInSceneTransition { get; private set; }
+
+        public delegate void SceneTransitionFinishEvent();
+
+        public event GameManager.SceneTransitionFinishEvent OnFinishedSceneTransition;
+
+        private IEnumerator BeginSceneTransitionRoutine(GameManager.SceneLoadInfo info)
+        {
+            if (this.sceneLoad != null)
+            {
+                Debug.LogErrorFormat(this, "Cannot scene transition to {0}, while a scene transition is in progress", new object[]
+                {
+                    info.SceneName
+                });
+                yield break;
+            }
+            this.IsInSceneTransition = true;
+            this.sceneLoad = new SceneLoad(this, info.SceneName);
+            this.isLoading = true;
+            this.loadVisualization = info.Visualization;
+            if (this.hero_ctrl != null)
+            {
+                if (this.hero_ctrl.cState.superDashing)
+                {
+                    this.hero_ctrl.exitedSuperDashing = true;
+                }
+                if (this.hero_ctrl.cState.spellQuake)
+                {
+                    this.hero_ctrl.exitedQuake = true;
+                }
+                this.hero_ctrl.proxyFSM.SendEvent("HeroCtrl-LeavingScene");
+                this.hero_ctrl.SetHeroParent(null);
+            }
+            if (!info.IsFirstLevelForPlayer)
+            {
+                this.NoLongerFirstGame();
+            }
+            this.SaveLevelState();
+            this.SetState(GameState.EXITING_LEVEL);
+            this.entryGateName = (info.EntryGateName ?? string.Empty);
+            this.targetScene = info.SceneName;
+            if (this.hero_ctrl != null)
+            {
+                this.hero_ctrl.LeaveScene(info.HeroLeaveDirection);
+            }
+            if (!info.PreventCameraFadeOut)
+            {
+                this.cameraCtrl.FreezeInPlace(true);
+                this.cameraCtrl.FadeOut(CameraFadeType.LEVEL_TRANSITION);
+            }
+            this.tilemapDirty = true;
+            this.startedOnThisScene = false;
+            this.nextSceneName = info.SceneName;
+            this.waitForManualLevelStart = true;
+            if (this.UnloadingLevel != null)
+            {
+                this.UnloadingLevel();
+            }
+            string lastSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            this.sceneLoad.FetchComplete += delegate ()
+            {
+                info.NotifyFetchComplete();
+            };
+            this.sceneLoad.WillActivate += delegate ()
+            {
+                if (this.DestroyPersonalPools != null)
+                {
+                    this.DestroyPersonalPools();
+                }
+                this.entryDelay = info.EntryDelay;
+            };
+            this.sceneLoad.ActivationComplete += delegate ()
+            {
+#pragma warning disable 0618
+                UnityEngine.SceneManagement.SceneManager.UnloadScene(lastSceneName);
+#pragma warning restore 0618
+                this.RefreshTilemapInfo(info.SceneName);
+                this.sceneLoad.IsUnloadAssetsRequired = (info.AlwaysUnloadUnusedAssets || this.IsUnloadAssetsRequired(lastSceneName, info.SceneName));
+                bool flag = true;
+                if (!this.sceneLoad.IsUnloadAssetsRequired)
+                {
+                    float? beginTime = this.sceneLoad.BeginTime;
+                    if (beginTime != null)
+                    {
+                        float num = Time.realtimeSinceStartup - beginTime.Value;
+                        if (num > Platform.Current.MaximumLoadDurationForNonCriticalGarbageCollection && this.sceneLoadsWithoutGarbageCollect < Platform.Current.MaximumSceneTransitionsWithoutNonCriticalGarbageCollection)
+                        {
+                            flag = false;
+                        }
+                    }
+                }
+                if (flag)
+                {
+                    this.sceneLoadsWithoutGarbageCollect = 0;
+                }
+                else
+                {
+                    this.sceneLoadsWithoutGarbageCollect++;
+                }
+                this.sceneLoad.IsGarbageCollectRequired = flag;
+            };
+            this.sceneLoad.Complete += delegate ()
+            {
+                this.SetupSceneRefs(false);
+                this.BeginScene();
+                if (this.gameMap != null)
+                {
+                    this.gameMap.GetComponent<GameMap>().LevelReady();
+                }
+            };
+            this.sceneLoad.Finish += delegate ()
+            {
+                this.sceneLoad = null;
+                this.isLoading = false;
+                this.waitForManualLevelStart = false;
+                info.NotifyFinished();
+                this.OnNextLevelReady();
+                this.IsInSceneTransition = false;
+                if (this.OnFinishedSceneTransition != null)
+                {
+                    this.OnFinishedSceneTransition();
+                }
+            };
+            if (GameManager.SceneTransitionBegan != null)
+            {
+                try
+                {
+                    GameManager.SceneTransitionBegan(this.sceneLoad);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError("Exception in responders to GameManager.SceneTransitionBegan. Attempting to continue load regardless.");
+                    Debug.LogException(exception);
+                }
+            }
+            this.sceneLoad.IsFetchAllowed = (Platform.Current.FetchScenesBeforeFade || info.PreventCameraFadeOut);
+            this.sceneLoad.IsActivationAllowed = false;
+            this.sceneLoad.Begin();
+            float cameraFadeTimer = 0.5f;
+            for (; ; )
+            {
+                bool isActivationBlocked = false;
+                cameraFadeTimer -= Time.unscaledDeltaTime;
+                if (info.WaitForSceneTransitionCameraFade && cameraFadeTimer > 0f)
+                {
+                    isActivationBlocked = true;
+                }
+                if (!info.IsReadyToActivate())
+                {
+                    isActivationBlocked = true;
+                }
+                if (!isActivationBlocked)
+                {
+                    break;
+                }
+                yield return null;
+            }
+            this.sceneLoad.IsFetchAllowed = true;
+            this.sceneLoad.IsActivationAllowed = true;
             yield break;
         }
         #endregion
