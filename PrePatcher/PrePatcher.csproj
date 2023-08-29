@@ -3,8 +3,8 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net35</TargetFramework>
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-        <AssemblyTitle>PostPatcher</AssemblyTitle>
-        <Product>PostPatcher</Product>
+        <AssemblyTitle>PrePatcher</AssemblyTitle>
+        <Product>PrePatcher</Product>
         <Copyright>Copyright © 2019</Copyright>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <LangVersion>9</LangVersion>

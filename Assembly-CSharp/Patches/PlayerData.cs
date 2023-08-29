@@ -173,11 +173,13 @@ namespace Modding.Patches
             ModHooks.SetPlayerVector3(vector3Name, value, this);
         }
 
+        [MonoModReplace]
         public T GetVariable<T>(string varName)
         {
             return ModHooks.GetPlayerVariable<T>(varName, this);
         }
 
+        [MonoModReplace]
         public void SetVariable<T>(string varName, T value)
         {
             ModHooks.SetPlayerVariable<T>(varName, value, this);

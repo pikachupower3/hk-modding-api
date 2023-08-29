@@ -41,8 +41,11 @@ namespace Postpatcher
             MethodDefinition pdGetVector3 = pd.Methods.First(method => method.Name == "GetVector3");
             MethodDefinition pdSetVector3 = pd.Methods.First(method => method.Name == "SetVector3");
 
-            MethodDefinition pdGetVariable = pd.Methods.First(method => method.Name == "GetVariable");
-            MethodDefinition pdSetVariable = pd.Methods.First(method => method.Name == "SetVariable");
+            MethodDefinition pdGetVariable = GenerateGetVariable(module);
+            MethodDefinition pdSetVariable = GenerateSetVariable(module);
+
+            pd.Methods.Add(pdGetVariable);
+            pd.Methods.Add(pdSetVariable);
 
             MethodDefinition setBoolSwappedArgs = GenerateSwappedMethod(pd, pdSetBool);
             MethodDefinition setFloatSwappedArgs = GenerateSwappedMethod(pd, pdSetFloat);
@@ -329,6 +332,57 @@ namespace Postpatcher
             methodParent.Methods.Add(swapped);
 
             return swapped;
+        }
+
+        private static MethodDefinition GenerateSetVariable(ModuleDefinition asm_csharp)
+        {
+            var SetVariable = new MethodDefinition("SetVariable", MethodAttributes.Public | MethodAttributes.HideBySig, asm_csharp.TypeSystem.Void);
+            SetVariable.DeclaringType = asm_csharp.GetType("", "PlayerData");
+
+            var T = new GenericParameter("T", SetVariable);
+            SetVariable.GenericParameters.Add(T);
+
+            var fieldName = new ParameterDefinition("varName", ParameterAttributes.None, asm_csharp.TypeSystem.String);
+            SetVariable.Parameters.Add(fieldName);
+            var value = new ParameterDefinition("value", ParameterAttributes.None, T);
+            SetVariable.Parameters.Add(value);
+
+            SetVariable.Body.InitLocals = true;
+
+            var il = SetVariable.Body.GetILProcessor();
+
+            //il.Emit(OpCodes.Newobj, asm_csharp.ImportReference(typeof(NotImplementedException).GetConstructor(new Type[0])));
+            //il.Emit(OpCodes.Throw);
+            il.Emit(OpCodes.Ret);
+
+            SetVariable.Body.OptimizeMacros();
+
+            return SetVariable;
+        }
+
+        private static MethodDefinition GenerateGetVariable(ModuleDefinition asm_csharp)
+        {
+            var GetVariable = new MethodDefinition("GetVariable", MethodAttributes.Public | MethodAttributes.HideBySig, asm_csharp.TypeSystem.Object);
+            GetVariable.DeclaringType = asm_csharp.GetType("", "PlayerData");
+
+            var T = new GenericParameter("T", GetVariable);
+            GetVariable.GenericParameters.Add(T);
+            GetVariable.ReturnType = T;
+
+            var fieldName = new ParameterDefinition("varName", ParameterAttributes.None, asm_csharp.TypeSystem.String);
+            GetVariable.Parameters.Add(fieldName);
+
+            GetVariable.Body.InitLocals = true;
+
+            var il = GetVariable.Body.GetILProcessor();
+
+            //il.Emit(OpCodes.Newobj, asm_csharp.ImportReference(typeof(NotImplementedException).GetConstructor(new Type[0])));
+            //il.Emit(OpCodes.Throw);
+            il.Emit(OpCodes.Ret);
+
+            GetVariable.Body.OptimizeMacros();
+
+            return GetVariable;
         }
     }
 }
