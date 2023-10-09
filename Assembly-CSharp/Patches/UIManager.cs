@@ -55,7 +55,8 @@ namespace Modding.Patches
 
         public extern void orig_Awake();
 
-        private Sprite LoadImage() => Assembly.GetExecutingAssembly().LoadEmbeddedSprite("Modding.logo.png", pixelsPerUnit: 100f);
+        private Sprite LoadLogo() => Assembly.GetExecutingAssembly().LoadEmbeddedSprite("Modding.logo.png", pixelsPerUnit: 100f);
+        private Sprite LoadTitle() => Assembly.GetExecutingAssembly().LoadEmbeddedSprite("Modding.title.png", pixelsPerUnit: 100f);
 
         public void Awake()
         {
@@ -89,7 +90,15 @@ namespace Modding.Patches
             clone.transform.localScale *= 0.1f;
 
             var sr = clone.GetComponent<SpriteRenderer>();
-            sr.sprite = LoadImage();
+            sr.sprite = LoadLogo();
+        }
+
+        private extern void orig_SetupRefs();
+
+        private void SetupRefs()
+        {
+            orig_SetupRefs();
+            gameTitle.sprite = LoadTitle();
         }
         
         private bool hasCalledEditMenus = false;

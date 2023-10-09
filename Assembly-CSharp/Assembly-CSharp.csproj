@@ -14,6 +14,7 @@
 
     <ItemGroup>
         <Files Include="$(SolutionDir)Vanilla/*" />
+        <None Remove="title.png" />
 
         <BuildDir Include="$(TargetDir)" />
         
@@ -108,6 +109,7 @@
     
     <ItemGroup>
         <EmbeddedResource Include="logo.png" />
+        <EmbeddedResource Include="title.png" />
     </ItemGroup>
 
     <ItemGroup>
