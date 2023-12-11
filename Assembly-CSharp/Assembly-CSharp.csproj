@@ -14,6 +14,9 @@
 
     <ItemGroup>
         <Files Include="$(SolutionDir)Vanilla/*" />
+        <Compile Remove="Shims\System\**" />
+        <EmbeddedResource Remove="Shims\System\**" />
+        <None Remove="Shims\System\**" />
         <None Remove="title.png" />
 
         <BuildDir Include="$(TargetDir)" />

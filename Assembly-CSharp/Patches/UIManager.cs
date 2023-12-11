@@ -17,7 +17,7 @@ namespace Modding.Patches
         private static UIManager _instance;
 
         [MonoModIgnore]
-        private InputHandler ih;
+        private global::InputHandler ih;
 
         public MenuScreen currentDynamicMenu { get; set; }
 
@@ -91,13 +91,6 @@ namespace Modding.Patches
 
             var sr = clone.GetComponent<SpriteRenderer>();
             sr.sprite = LoadLogo();
-        }
-
-        private extern void orig_SetupRefs();
-
-        private void SetupRefs()
-        {
-            orig_SetupRefs();
             gameTitle.sprite = LoadTitle();
         }
         
@@ -192,6 +185,44 @@ namespace Modding.Patches
             this.SetMenuState(MainMenuState.DYNAMIC_MENU);
             this.ih.StartUIInput();
             this.ignoreUnpause = false;
+            yield break;
+        }
+
+        [MonoModIgnore]
+        private GameManager gm;
+
+        [MonoModIgnore]
+        private extern IEnumerator FadeInSprite(SpriteRenderer sprite);
+
+        [MonoModReplace]
+        public IEnumerator GoToMainMenu()
+        {
+            if (this.ih == null)
+            {
+                this.ih = this.gm.inputHandler;
+            }
+            this.ih.StopUIInput();
+            if (this.menuState == GlobalEnums.MainMenuState.OPTIONS_MENU || this.menuState == GlobalEnums.MainMenuState.ACHIEVEMENTS_MENU || this.menuState == GlobalEnums.MainMenuState.QUIT_GAME_PROMPT || this.menuState == GlobalEnums.MainMenuState.EXTRAS_MENU)
+            {
+                yield return this.StartCoroutine(this.HideCurrentMenu());
+            }
+            else if (this.menuState == GlobalEnums.MainMenuState.SAVE_PROFILES)
+            {
+                yield return this.StartCoroutine(this.HideSaveProfileMenu());
+            }
+            this.ih.StopUIInput();
+            this.gameTitle.gameObject.SetActive(true);
+            this.mainMenuScreen.gameObject.SetActive(true);
+            //this.gameTitle.GetComponent<LogoLanguage>().SetSprite();
+            this.gameTitle.sprite = LoadTitle();
+            this.StartCoroutine(this.FadeInSprite(this.gameTitle));
+            this.subtitleFSM.SendEvent("FADE IN");
+            yield return this.StartCoroutine(this.FadeInCanvasGroup(this.mainMenuScreen));
+            this.mainMenuScreen.interactable = true;
+            this.ih.StartUIInput();
+            yield return null;
+            this.mainMenuButtons.HighlightDefault(false);
+            this.SetMenuState(MainMenuState.MAIN_MENU);
             yield break;
         }
     }
