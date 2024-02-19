@@ -17,7 +17,7 @@ namespace Modding.Patches
         {
             if (textUi != null)
             {
-                string text = "1.3.3.7";
+                string text = "1.3.0.4 r8635";
                 textUi.text = text; 
             }
         }

@@ -77,6 +77,9 @@ namespace Modding.Patches
 
             if (_instance != this)
                 return;
+
+            if (GameManager.instance.IsGameplayScene())
+                return;
             
             var dlc = transform.Find("UICanvas/MainMenuScreen/TeamCherryLogo/Hidden_Dreams_Logo").gameObject;
 
