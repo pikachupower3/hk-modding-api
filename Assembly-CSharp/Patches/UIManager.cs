@@ -118,8 +118,10 @@ namespace Modding.Patches
         [MonoModIgnore]
         public extern void SetMenuState(MainMenuState state);
 
-        [MonoModIgnore]
-        public extern Coroutine StartMenuAnimationCoroutine(IEnumerator coro);
+        public Coroutine StartMenuAnimationCoroutine(IEnumerator coro)
+        {
+            return base.StartCoroutine(coro);
+        }
 
         public void UIGoToDynamicMenu(MenuScreen menu)
         {
