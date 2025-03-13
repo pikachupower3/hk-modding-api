@@ -52,7 +52,7 @@
         <MakeDir Directories="$(OutputDir)" />
 
         <!-- Copy the API, the documentation, and the README. -->
-        <Copy SourceFiles="$(SolutionDir)/README.ModdingApi.md" DestinationFiles="$(OutputDir)/README.md" />
+        <Copy SourceFiles="$(SolutionDir)/readme.moddingapi.md" DestinationFiles="$(OutputDir)/README.md" />
         <Copy SourceFiles="$(TargetDir)MONOMODDED_Assembly-CSharp.dll" DestinationFiles="$(OutputDir)/Assembly-CSharp.dll" />
         <Copy SourceFiles="$(TargetDir)Assembly-CSharp.mm.xml" DestinationFiles="$(OutputDir)/Assembly-CSharp.xml" />
         
