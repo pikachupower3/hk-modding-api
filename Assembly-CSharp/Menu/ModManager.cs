@@ -10,6 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace Modding.Menu
 {
+
     //Menu based mod manager by @KDT
     internal class ModManager : Loggable
     {
@@ -19,6 +20,23 @@ namespace Modding.Menu
 
         public static Selectable[] ModArray;
         public static Selectable Back;
+
+        private static GameObject _item = null;
+        private static GameObject item
+        {
+            get
+            {
+                if (_item == null)
+                {
+                    _item = Object.Instantiate(_uim.videoMenuScreen.defaultHighlight.FindSelectableOnDown().gameObject);
+                    Object.DestroyImmediate(_item.GetComponent<MenuOptionHorizontal>());
+                    Object.DestroyImmediate(_item.GetComponent<MenuSetting>());
+                    Object.DontDestroyOnLoad(_item);
+                }
+
+                return _item;
+            }
+        }
 
         public ModManager()
         {
@@ -139,9 +157,6 @@ namespace Modding.Menu
             Object.Destroy(ModMenuScreen.defaultHighlight.FindSelectableOnDown().gameObject.transform.parent.gameObject);
             
             Back = ModMenuScreen.defaultHighlight.FindSelectableOnUp();
-            GameObject item = _uim.videoMenuScreen.defaultHighlight.FindSelectableOnDown().gameObject;
-            Object.DestroyImmediate(item.GetComponent<MenuOptionHorizontal>());
-            Object.DestroyImmediate(item.GetComponent<MenuSetting>());
             Object.DestroyImmediate(ModMenuScreen.content.GetComponent<VerticalLayoutGroup>());
             Object.Destroy(ModMenuScreen.defaultHighlight.gameObject.transform.parent.gameObject);
             try
@@ -242,7 +257,6 @@ namespace Modding.Menu
             {
                 LogError(ex);
             }
-
 
             ((Patches.MenuSelectable)Back).cancelAction = Patches.CancelAction.QuitModMenu;
             EventTrigger backEvents = Back.gameObject.GetComponent<EventTrigger>();
